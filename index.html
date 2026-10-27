@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ala Vista</title>
+<meta name="description" content="Ala Vista: catálogo de aves del humedal Conejera (Uzhe Tibacuy, Bogotá) para marcar las que has visto. Funciona sin conexión.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#1c6a57">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ala Vista">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+@font-face { font-family: "Newsreader"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/newsreader-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Newsreader"; font-style: normal; font-weight: 600; font-display: swap; src: url("fonts/newsreader-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Newsreader"; font-style: italic; font-weight: 400; font-display: swap; src: url("fonts/newsreader-latin-400-italic.woff2") format("woff2"); }
+@font-face { font-family: "Public Sans"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/public-sans-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Public Sans"; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/public-sans-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Public Sans"; font-style: normal; font-weight: 600; font-display: swap; src: url("fonts/public-sans-latin-600-normal.woff2") format("woff2"); }
+
+/* Concepto: guía de campo de bolsillo. Catálogo de fotos en rejilla, avistamientos por especie, progreso de la lista al frente. */
+:root {
+  color-scheme: light;
+  --bg: #ecf1ee;
+  --surface: #f8faf8;
+  --ink: #14231f;
+  --muted: #55665f;
+  --line: #c9d5cf;
+  --accent: #1c6a57;
+  --accent-ink: #ffffff;
+  --accent-soft: #d6e8e0;
+  --danger: #a1342b;
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-body: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #0e1815;
+    --surface: #16231f;
+    --ink: #e4eee9;
+    --muted: #92a59d;
+    --line: #2b3c36;
+    --accent: #5fc3a2;
+    --accent-ink: #08140f;
+    --accent-soft: #1f3a31;
+    --danger: #ee8d83;
+  }
+}
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+img { max-width: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.45;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: 96px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); }
+.wrap { max-width: 1040px; margin: 0 auto; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.top { padding-top: 22px; display: grid; gap: 10px; }
+.eyebrow { margin: 0; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+h1 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: clamp(30px, 7vw, 44px); line-height: 1.05; text-wrap: balance; }
+h2 { margin: 0; font-family: var(--font-display); font-size: 28px; line-height: 1.1; font-weight: 600; text-wrap: balance; }
+h3 { margin: 14px 0 0; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.prog { display: flex; align-items: baseline; gap: 8px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.prog strong { font-family: var(--font-display); font-size: 34px; line-height: 1; color: var(--accent); font-weight: 600; }
+.bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.4s ease; }
+
+.hero { margin-top: 18px; padding: 18px; border-radius: 14px; background: var(--accent); color: var(--accent-ink); display: grid; gap: 12px; }
+.hero h2 { font-size: clamp(26px, 6.5vw, 32px); }
+.hero p { margin: 0; max-width: 46ch; }
+.big { flex: 1 1 150px; min-height: 54px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 16px; border-radius: 10px; border: 2px solid var(--accent-ink); background: transparent; color: var(--accent-ink); font-weight: 600; font-size: 16px; }
+.big.primary { background: var(--accent-ink); color: var(--accent); }
+.hero :focus-visible { outline-color: var(--accent-ink); }
+
+.tools { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); padding: 14px 0 12px; display: grid; gap: 10px; border-bottom: 1px solid var(--line); margin-top: 8px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.search { flex: 1 1 200px; min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.sel { flex: 0 1 170px; min-width: 0; padding: 10px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.chip { padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-weight: 500; font-variant-numeric: tabular-nums; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.ghost { padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: transparent; margin-left: auto; font-size: 13.5px; }
+
+.grid { list-style: none; margin: 18px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.grid li { min-width: 0; }
+.card { width: 100%; text-align: left; padding: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; display: grid; align-content: start; }
+.card:hover { border-color: var(--accent); }
+.ph { position: relative; display: block; aspect-ratio: 4 / 3; background: var(--line); }
+.ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tick { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; }
+.multi { position: absolute; left: 8px; bottom: 8px; padding: 2px 7px; border-radius: 999px; background: rgba(10, 20, 17, 0.72); color: #fff; font-size: 11.5px; }
+.nm { display: block; padding: 10px 10px 0; font-family: var(--font-display); font-weight: 600; font-size: 17px; line-height: 1.15; text-wrap: balance; }
+.sc { display: block; padding: 2px 10px 0; font-family: var(--font-display); font-style: italic; color: var(--muted); font-size: 14px; }
+.st { display: block; padding: 6px 10px 10px; font-size: 12.5px; color: var(--muted); }
+.card.seen .st { color: var(--accent); font-weight: 500; }
+.empty { margin: 28px 0; color: var(--muted); max-width: 46ch; }
+.foot { margin-top: 36px; font-size: 12.5px; color: var(--muted); max-width: 70ch; display: grid; gap: 6px; }
+.foot p { margin: 0; }
+
+.ov { position: fixed; inset: 0; z-index: 30; background: rgba(8, 16, 13, 0.62); display: flex; align-items: flex-end; justify-content: center; }
+.sheet { position: relative; width: 100%; max-width: 560px; max-height: 94%; overflow-y: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 16px 16px 0 0; padding-bottom: env(safe-area-inset-bottom, 0px); }
+@media (min-width: 700px) { .ov { align-items: center; } .sheet { border-radius: 16px; max-height: 90%; } }
+.x { position: absolute; top: 10px; right: 10px; z-index: 2; width: 38px; height: 38px; border-radius: 50%; border: 0; background: rgba(10, 20, 17, 0.7); color: #fff; font-size: 22px; line-height: 1; }
+#dImg { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; background: var(--line); }
+.thumbs { display: flex; gap: 8px; padding: 10px 16px 0; overflow-x: auto; }
+.th { flex: 0 0 auto; padding: 0; border: 2px solid transparent; border-radius: 8px; background: none; overflow: hidden; width: 74px; text-align: center; }
+.th[aria-pressed="true"] { border-color: var(--accent); }
+.th img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
+.th span { display: block; font-size: 11.5px; padding: 2px 0; color: var(--muted); }
+.dbody { padding: 14px 16px 22px; display: grid; gap: 6px; }
+.pbody { padding: 56px 16px 24px; display: grid; gap: 14px; }
+.fam { margin: 0; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.dsci { margin: 0; font-family: var(--font-display); font-style: italic; font-size: 18px; color: var(--muted); }
+.actual { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.status { margin: 12px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--accent-soft); color: var(--ink); font-size: 14px; }
+.logs { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.log { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; }
+.log b { font-variant-numeric: tabular-nums; }
+.log .where { color: var(--muted); font-size: 13.5px; overflow-wrap: anywhere; }
+.log .nt { grid-column: 1 / -1; font-size: 14px; overflow-wrap: anywhere; }
+.rm { border: 0; background: none; color: var(--muted); font-size: 13px; padding: 2px 4px; text-decoration: underline; }
+.rm[data-armed="1"] { color: var(--danger); font-weight: 600; }
+.form { display: grid; gap: 10px; margin-top: 4px; }
+.form label, .pbody label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); font-weight: 500; }
+.form input, .form textarea, .pbody textarea { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); min-width: 0; width: 100%; }
+.form textarea, .pbody textarea { resize: vertical; min-height: 64px; }
+.go { padding: 12px 16px; border: 0; border-radius: 8px; background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.sec { padding: 12px 16px; border: 1px solid var(--line); border-radius: 8px; background: transparent; font-weight: 600; text-align: center; display: block; }
+.acts { display: grid; gap: 8px; }
+.hint { margin: 0; font-size: 13.5px; color: var(--muted); }
+.grp { display: grid; gap: 6px; }
+.grp b { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); font-size: 14px; }
+.tag[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); font-weight: 600; }
+.alt { display: grid; grid-template-columns: 64px 1fr auto; gap: 10px; align-items: center; width: 100%; text-align: left; padding: 6px; border: 1px solid var(--line); border-radius: 8px; background: transparent; }
+.alt img { width: 64px; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; display: block; }
+.alt span { min-width: 0; font-weight: 600; }
+.alt small { display: block; color: var(--muted); font-style: italic; font-weight: 400; }
+.alt small.hits { font-style: normal; font-size: 12.5px; }
+.alt em { font-style: normal; font-size: 12px; color: var(--accent); padding-right: 6px; font-weight: 600; }
+.results { display: grid; gap: 8px; }
+.fab { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 15; display: inline-flex; align-items: center; gap: 8px; padding: 14px 20px; border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: 15px; box-shadow: 0 6px 18px rgba(8, 20, 16, 0.35); }
+.filebtn { position: relative; overflow: hidden; cursor: pointer; }
+.filebtn input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 0; }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 40; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 8px; font-size: 14px; max-width: calc(100% - 32px); }
+@media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">Aves del humedal Conejera · Suba, Bogotá</p>
+    <h1>Ala Vista</h1>
+    <div class="prog" aria-live="polite"><strong id="nSeen">0</strong><span>de <span id="nTotal"></span> especies vistas</span></div>
+    <div class="bar" aria-hidden="true"><i id="barFill"></i></div>
+  </header>
+
+  <section class="hero" id="idHero" aria-labelledby="idH">
+    <h2 id="idH">¿Qué ave es esta?</h2>
+    <p>Descríbela con lo que alcanzaste a ver y la busco en el catálogo, sin necesidad de conexión.</p>
+    <div class="row"><button class="big primary" id="btnTxt" type="button">Describirla</button></div>
+  </section>
+
+  <div class="tools">
+    <div class="row">
+      <input class="search" id="q" type="search" placeholder="Buscar por nombre o familia" autocomplete="off" aria-label="Buscar ave">
+      <select class="sel" id="fam" aria-label="Filtrar por familia"></select>
+    </div>
+    <div class="row">
+      <button class="chip" id="cTodas" data-f="todas" aria-pressed="true">Todas</button>
+      <button class="chip" id="cVistas" data-f="vistas" aria-pressed="false">Vistas</button>
+      <button class="chip" id="cPorver" data-f="porver" aria-pressed="false">Por ver</button>
+      <button class="ghost" id="btnData" type="button">Mis datos</button>
+    </div>
+  </div>
+
+  <ul class="grid" id="grid"></ul>
+  <p class="empty" id="none" hidden>Ninguna ave coincide con esa búsqueda. Prueba con otro nombre o cambia el filtro.</p>
+
+  <footer class="foot">
+    <p>Catálogo y fotos: Colectivo "Avestamiento en Humedales" (A. Pérez, C. Villamil, A. Montañez), guía 693 del Field Museum, versión de octubre de 2015. Las variantes de una misma especie (macho, hembra, juvenil) se agrupan en una sola ficha.</p>
+    <p>Los nombres comunes son sugeridos y faltan por revisar. Donde el PDF usa un nombre científico anterior, la ficha muestra el actual. Los rasgos de tamaño, ambiente y color son orientativos.</p>
+  </footer>
+</div>
+
+<button class="fab" id="fab" type="button" hidden></button>
+
+<div class="ov" id="ov" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+    <button class="x" id="dClose" aria-label="Cerrar ficha">×</button>
+    <img id="dImg" alt="" width="400" height="300">
+    <div class="thumbs" id="dThumbs"></div>
+    <div class="dbody">
+      <p class="fam" id="dFam"></p>
+      <h2 id="dTitle"></h2>
+      <p class="dsci" id="dSci"></p>
+      <p class="actual" id="dActual" hidden></p>
+      <p class="status" id="dStatus"></p>
+      <h3 id="dLogH">Mis avistamientos</h3>
+      <ul class="logs" id="dList"></ul>
+      <h3>Registrar avistamiento</h3>
+      <form class="form" id="form">
+        <label for="fFecha">Fecha<input id="fFecha" type="date" required></label>
+        <label for="fLugar">Lugar<input id="fLugar" type="text" maxlength="120" autocomplete="off"></label>
+        <label for="fNota">Notas<textarea id="fNota" maxlength="500" placeholder="Qué hacía, cuántas había, dónde la viste"></textarea></label>
+        <button class="go" id="fGo" type="submit">Marcar como vista</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="idp" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Identificar un ave por sus rasgos">
+    <button class="x" id="idClose" aria-label="Cerrar">×</button>
+    <div class="pbody">
+      <h2>Describe el ave</h2>
+      <p class="hint">Útil cuando está lejos o no alcanzas a fotografiarla. Escribe lo que viste y marca lo que sepas; las coincidencias aparecen abajo.</p>
+      <label for="idTxt">Qué viste<textarea id="idTxt" rows="3" maxlength="600" placeholder="Ej.: pájaro pequeño de pecho rojo, posado en una rama cerca del agua"></textarea></label>
+      <div id="idGroups"></div>
+      <div class="row"><h3 style="margin:0" id="resH">Posibles aves</h3><button class="rm" id="idClear" type="button" style="margin-left:auto">Limpiar</button></div>
+      <div class="results" id="idRes" aria-live="polite"></div>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="dp" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Mis datos">
+    <button class="x" id="dpClose" aria-label="Cerrar">×</button>
+    <div class="pbody">
+      <h2>Mis datos</h2>
+      <p class="status" id="dpInfo" style="margin:0"></p>
+      <p class="hint">Tus avistamientos se guardan en este dispositivo. Si borras los datos del navegador o cambias de teléfono se pierden, así que guarda una copia de vez en cuando.</p>
+      <div class="acts">
+        <button class="go" id="bBackup" type="button">Guardar copia de seguridad</button>
+        <label class="sec filebtn">Restaurar copia<input id="bRestore" type="file" accept=".json,application/json" aria-label="Restaurar copia de seguridad"></label>
+        <button class="sec" id="bCsv" type="button">Exportar a CSV (Excel)</button>
+        <button class="sec" id="bInstall" type="button" hidden>Instalar en este dispositivo</button>
+      </div>
+      <p class="hint" id="iosHint" hidden>En iPhone: toca el botón Compartir y elige «Añadir a pantalla de inicio» para instalarla.</p>
+      <p class="hint" id="lastBk"></p>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+const S = [{"id":"anas-discors","cientifico":"Anas discors","familia":"Anatidae","comun":"Barraquete aliazul","actual":"","fotos":[{"n":1,"var":"♂"},{"n":2,"var":"♀"}],"t":"m","a":["agua"],"c":["cafe","gris","blanco","azulverde"]},{"id":"oxyura-jamaicensis","cientifico":"Oxyura jamaicensis","familia":"Anatidae","comun":"Pato andino","actual":"","fotos":[{"n":3,"var":"♂"},{"n":4,"var":"♀"}],"t":"m","a":["agua"],"c":["cafe","negro","blanco","azulverde"]},{"id":"butorides-striata","cientifico":"Butorides striata","familia":"Ardeidae","comun":"Garcita rayada","actual":"","fotos":[{"n":5,"var":""}],"t":"m","a":["agua","orilla"],"c":["gris","negro"]},{"id":"bubulcus-ibis","cientifico":"Bubulcus ibis","familia":"Ardeidae","comun":"Garcita del ganado","actual":"","fotos":[{"n":6,"var":""}],"t":"m","a":["pasto","orilla"],"c":["blanco"]},{"id":"ardea-alba","cientifico":"Ardea alba","familia":"Ardeidae","comun":"Garza real","actual":"","fotos":[{"n":7,"var":""}],"t":"g","a":["agua","orilla"],"c":["blanco"]},{"id":"nycticorax-nycticorax","cientifico":"Nycticorax nycticorax","familia":"Ardeidae","comun":"Garza nocturna","actual":"","fotos":[{"n":8,"var":""}],"t":"m","a":["agua","orilla","arbol"],"c":["negro","gris","blanco"]},{"id":"coragyps-atratus","cientifico":"Coragyps atratus","familia":"Cathartidae","comun":"Gallinazo negro","actual":"","fotos":[{"n":9,"var":""}],"t":"g","a":["aire","pasto"],"c":["negro"]},{"id":"elanus-leucurus","cientifico":"Elanus leucurus","familia":"Accipitridae","comun":"Elanio maromero","actual":"","fotos":[{"n":10,"var":""},{"n":11,"var":"juvenil"}],"t":"m","a":["aire","arbol","pasto"],"c":["blanco","gris","negro"]},{"id":"rupornis-magnirostris","cientifico":"Rupornis magnirostris","familia":"Accipitridae","comun":"Gavilán caminero","actual":"","fotos":[{"n":12,"var":""}],"t":"m","a":["arbol","aire"],"c":["gris","cafe"]},{"id":"rallus-semiplumbeus","cientifico":"Rallus semiplumbeus","familia":"Rallidae","comun":"Rascón andino","actual":"","fotos":[{"n":18,"var":""}],"t":"m","a":["orilla"],"c":["cafe","gris","rojo"]},{"id":"porzana-carolina","cientifico":"Porzana carolina","familia":"Rallidae","comun":"Polluela sora","actual":"","fotos":[{"n":19,"var":""}],"t":"m","a":["orilla","agua"],"c":["cafe","gris"]},{"id":"porphyrio-martinicus","cientifico":"Porphyrio martinicus","familia":"Rallidae","comun":"Polla azul","actual":"","fotos":[{"n":20,"var":""}],"t":"m","a":["agua","orilla"],"c":["azulverde","rojo"]},{"id":"gallinula-galeata","cientifico":"Gallinula galeata","familia":"Rallidae","comun":"Polla de agua","actual":"","fotos":[{"n":21,"var":""}],"t":"m","a":["agua","orilla"],"c":["negro","gris","rojo","blanco"]},{"id":"porphyriops-melanops","cientifico":"Porphyriops melanops","familia":"Rallidae","comun":"Polla moteada","actual":"","fotos":[{"n":22,"var":""}],"t":"m","a":["agua"],"c":["cafe","gris","negro"]},{"id":"fulica-americana","cientifico":"Fulica americana","familia":"Rallidae","comun":"Focha americana","actual":"","fotos":[{"n":23,"var":""}],"t":"m","a":["agua"],"c":["negro","gris","blanco"]},{"id":"vanellus-chilensis","cientifico":"Vanellus chilensis","familia":"Charadriidae","comun":"Pellar común","actual":"","fotos":[{"n":24,"var":""}],"t":"m","a":["pasto","orilla"],"c":["gris","cafe","blanco","negro"]},{"id":"gallinago-nobilis","cientifico":"Gallinago nobilis","familia":"Scolopacidae","comun":"Caica paramuna","actual":"","fotos":[{"n":25,"var":""}],"t":"m","a":["orilla","pasto"],"c":["cafe","blanco"]},{"id":"tringa-melanoleuca","cientifico":"Tringa melanoleuca","familia":"Scolopacidae","comun":"Patiamarillo mayor","actual":"","fotos":[{"n":26,"var":""}],"t":"m","a":["orilla","agua"],"c":["gris","blanco","amarillo"]},{"id":"tringa-flavipes","cientifico":"Tringa flavipes","familia":"Scolopacidae","comun":"Patiamarillo menor","actual":"","fotos":[{"n":27,"var":""}],"t":"m","a":["orilla","agua"],"c":["gris","blanco","amarillo"]},{"id":"tringa-solitaria","cientifico":"Tringa solitaria","familia":"Scolopacidae","comun":"Andarríos solitario","actual":"","fotos":[{"n":28,"var":""}],"t":"m","a":["orilla"],"c":["gris","blanco","cafe"]},{"id":"columba-livia","cientifico":"Columba livia","familia":"Columbidae","comun":"Paloma doméstica","actual":"","fotos":[{"n":29,"var":""}],"t":"m","a":["pasto","arbol","aire"],"c":["gris","blanco","negro"]},{"id":"zenaida-auriculata","cientifico":"Zenaida auriculata","familia":"Columbidae","comun":"Torcaza naguiblanca","actual":"","fotos":[{"n":30,"var":""}],"t":"m","a":["pasto","arbol"],"c":["cafe","gris"]},{"id":"forpus-conspicillatus","cientifico":"Forpus conspicillatus","familia":"Psittacidae","comun":"Cotorra de anteojos","actual":"","fotos":[{"n":31,"var":""}],"t":"p","a":["arbol","aire"],"c":["azulverde"]},{"id":"amazona-ochrocephala","cientifico":"Amazona ochrocephala","familia":"Psittacidae","comun":"Loro real","actual":"","fotos":[{"n":32,"var":""}],"t":"m","a":["arbol","aire"],"c":["azulverde","amarillo"]},{"id":"coccyzus-americanus","cientifico":"Coccyzus americanus","familia":"Cuculidae","comun":"Cuco piquiamarillo","actual":"","fotos":[{"n":33,"var":""}],"t":"m","a":["arbol"],"c":["cafe","blanco"]},{"id":"asio-stygius","cientifico":"Asio stygius","familia":"Strigidae","comun":"Búho estigio","actual":"","fotos":[{"n":34,"var":""}],"t":"m","a":["arbol"],"c":["cafe","negro"]},{"id":"colibri-coruscans","cientifico":"Colibri coruscans","familia":"Trochilidae","comun":"Colibrí chillón","actual":"","fotos":[{"n":35,"var":""}],"t":"p","a":["arbol","aire"],"c":["azulverde"]},{"id":"picoides-fumigatus","cientifico":"Picoides fumigatus","familia":"Picidae","comun":"Carpintero ahumado","actual":"Dryobates fumigatus","fotos":[{"n":36,"var":""}],"t":"p","a":["arbol"],"c":["cafe","rojo"]},{"id":"synallaxis-subpudica","cientifico":"Synallaxis subpudica","familia":"Furnariidae","comun":"Rastrojero bogotano","actual":"","fotos":[{"n":37,"var":""}],"t":"p","a":["arbol"],"c":["cafe","gris","rojo"]},{"id":"serpophaga-cinerea","cientifico":"Serpophaga cinerea","familia":"Tyrannidae","comun":"Moscareta de torrentera","actual":"","fotos":[{"n":38,"var":""}],"t":"p","a":["orilla","agua"],"c":["gris","blanco"]},{"id":"pyrocephalus-rubinus","cientifico":"Pyrocephalus rubinus","familia":"Tyrannidae","comun":"Titiribí pechirrojo","actual":"","fotos":[{"n":39,"var":"♀"},{"n":40,"var":"♂"}],"t":"p","a":["arbol","pasto"],"c":["rojo","negro","cafe","blanco","gris"]},{"id":"tyrannus-melancholicus","cientifico":"Tyrannus melancholicus","familia":"Tyrannidae","comun":"Sirirí común","actual":"","fotos":[{"n":41,"var":""}],"t":"m","a":["arbol","aire"],"c":["amarillo","gris","cafe"]},{"id":"tyrannus-tyrannus","cientifico":"Tyrannus tyrannus","familia":"Tyrannidae","comun":"Sirirí norteño","actual":"","fotos":[{"n":42,"var":""}],"t":"m","a":["arbol","aire"],"c":["negro","blanco","gris"]},{"id":"notiochelidon-murina","cientifico":"Notiochelidon murina","familia":"Hirundinidae","comun":"Golondrina ratona","actual":"Orochelidon murina","fotos":[{"n":43,"var":""}],"t":"p","a":["aire"],"c":["gris","cafe","blanco"]},{"id":"troglodytes-aedon","cientifico":"Troglodytes aedon","familia":"Troglodytidae","comun":"Cucarachero común","actual":"","fotos":[{"n":44,"var":""}],"t":"p","a":["arbol"],"c":["cafe"]},{"id":"mimus-gilvus","cientifico":"Mimus gilvus","familia":"Mimidae","comun":"Sinsonte común","actual":"","fotos":[{"n":45,"var":""}],"t":"m","a":["arbol","pasto"],"c":["gris","blanco"]},{"id":"catharus-ustulatus","cientifico":"Catharus ustulatus","familia":"Turdidae","comun":"Zorzal de Swainson","actual":"","fotos":[{"n":46,"var":""}],"t":"p","a":["arbol"],"c":["cafe","blanco"]},{"id":"turdus-fuscater","cientifico":"Turdus fuscater","familia":"Turdidae","comun":"Mirla patinaranja","actual":"","fotos":[{"n":47,"var":""}],"t":"m","a":["pasto","arbol"],"c":["negro","rojo"]},{"id":"vireo-olivaceus","cientifico":"Vireo olivaceus","familia":"Vireonidae","comun":"Vireo ojirrojo","actual":"","fotos":[{"n":48,"var":""}],"t":"p","a":["arbol"],"c":["azulverde","gris","blanco"]},{"id":"mniotilta-varia","cientifico":"Mniotilta varia","familia":"Parulidae","comun":"Reinita trepadora","actual":"","fotos":[{"n":49,"var":""}],"t":"p","a":["arbol"],"c":["negro","blanco"]},{"id":"setophaga-fusca","cientifico":"Setophaga fusca","familia":"Parulidae","comun":"Reinita naranja","actual":"","fotos":[{"n":50,"var":"♂"}],"t":"p","a":["arbol"],"c":["negro","rojo","blanco","amarillo"]},{"id":"conirostrum-rufum","cientifico":"Conirostrum rufum","familia":"Thraupidae","comun":"Picocono rufo","actual":"","fotos":[{"n":51,"var":""}],"t":"p","a":["arbol"],"c":["gris","rojo"]},{"id":"thraupis-episcopus","cientifico":"Thraupis episcopus","familia":"Thraupidae","comun":"Azulejo común","actual":"","fotos":[{"n":52,"var":""}],"t":"p","a":["arbol"],"c":["gris","azulverde"]},{"id":"thraupis-palmarum","cientifico":"Thraupis palmarum","familia":"Thraupidae","comun":"Azulejo palmero","actual":"","fotos":[{"n":53,"var":""}],"t":"p","a":["arbol"],"c":["azulverde","gris"]},{"id":"catamenia-analis","cientifico":"Catamenia analis","familia":"Thraupidae","comun":"Semillero colifajado","actual":"","fotos":[{"n":54,"var":""}],"t":"p","a":["pasto","arbol"],"c":["gris","cafe"]},{"id":"diglossa-humeralis","cientifico":"Diglossa humeralis","familia":"Thraupidae","comun":"Picaflor negro","actual":"","fotos":[{"n":55,"var":""}],"t":"p","a":["arbol"],"c":["negro","gris"]},{"id":"sicalis-flaveola","cientifico":"Sicalis flaveola","familia":"Thraupidae","comun":"Canario coronado","actual":"","fotos":[{"n":56,"var":""}],"t":"p","a":["pasto"],"c":["amarillo"]},{"id":"zonotrichia-capensis","cientifico":"Zonotrichia capensis","familia":"Emberizidae","comun":"Copetón","actual":"","fotos":[{"n":57,"var":""},{"n":58,"var":"juvenil"}],"t":"p","a":["pasto","arbol"],"c":["cafe","gris","blanco","rojo"]},{"id":"piranga-rubra","cientifico":"Piranga rubra","familia":"Cardinalidae","comun":"Piranga abejera","actual":"","fotos":[{"n":59,"var":"♂ subadulto"},{"n":60,"var":"♂"}],"t":"m","a":["arbol"],"c":["rojo"]},{"id":"pheucticus-aureoventris","cientifico":"Pheucticus aureoventris","familia":"Cardinalidae","comun":"Picogordo negriamarillo","actual":"","fotos":[{"n":61,"var":""}],"t":"m","a":["arbol"],"c":["negro","amarillo"]},{"id":"pheucticus-ludovicianus","cientifico":"Pheucticus ludovicianus","familia":"Cardinalidae","comun":"Picogordo pechirrosado","actual":"","fotos":[{"n":62,"var":"♂"}],"t":"m","a":["arbol"],"c":["negro","blanco","rojo"]},{"id":"molothrus-bonariensis","cientifico":"Molothrus bonariensis","familia":"Icteridae","comun":"Chamón parásito","actual":"","fotos":[{"n":63,"var":""},{"n":64,"var":"♂"}],"t":"m","a":["pasto"],"c":["negro","gris","cafe"]},{"id":"icterus-chrysater","cientifico":"Icterus chrysater","familia":"Icteridae","comun":"Turpial montañero","actual":"","fotos":[{"n":65,"var":""}],"t":"m","a":["arbol"],"c":["amarillo","negro"]},{"id":"icterus-nigrogularis","cientifico":"Icterus nigrogularis","familia":"Icteridae","comun":"Turpial amarillo","actual":"","fotos":[{"n":66,"var":""}],"t":"m","a":["arbol"],"c":["amarillo","negro"]},{"id":"chrysomus-icterocephalus","cientifico":"Chrysomus icterocephalus","familia":"Icteridae","comun":"Monjita","actual":"","fotos":[{"n":67,"var":"♀"},{"n":68,"var":"♂"}],"t":"p","a":["orilla","pasto"],"c":["amarillo","negro","cafe"]},{"id":"sturnella-magna","cientifico":"Sturnella magna","familia":"Icteridae","comun":"Chirlobirlo","actual":"","fotos":[{"n":69,"var":""}],"t":"m","a":["pasto"],"c":["amarillo","cafe","negro","blanco"]},{"id":"astragalinus-psaltria","cientifico":"Astragalinus psaltria","familia":"Fringillidae","comun":"Jilguero aliblanco","actual":"Spinus psaltria","fotos":[{"n":70,"var":"♀"},{"n":71,"var":"♂"}],"t":"p","a":["arbol"],"c":["amarillo","negro","blanco","cafe"]},{"id":"sporaga-spinescens","cientifico":"Sporaga spinescens","familia":"Fringillidae","comun":"Jilguero andino","actual":"Spinus spinescens","fotos":[{"n":72,"var":""}],"t":"p","a":["arbol"],"c":["amarillo","negro"]}];
+const LS = "aves-conejera-v1";
+const LS_LUGAR = "aves-conejera-lugar";
+const LS_BK = "aves-conejera-copia";
+const $ = (id) => document.getElementById(id);
+const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pad = (n) => String(n).padStart(2, "0");
+const today = () => { const d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); };
+const fmt = (f) => { try { return new Date(f + "T00:00:00").toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" }); } catch (e) { return f; } };
+const img = (n) => "img/" + pad(n) + ".jpg";
+const lastOf = (list) => list.reduce((a, b) => (b.f > a ? b.f : a), "");
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const CHECK = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2.5 7.4 5.6 10.5 11.5 3.8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const CAM = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6h14M5 11h14M5 16h9"/></svg>';
+
+let map = {};
+let filter = "todas";
+let famSel = "";
+let query = "";
+let cur = null;
+let heroVisible = true;
+let persistAsked = false;
+let deferredInstall = null;
+const focusBack = {};
+
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.hidden = false;
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => { t.hidden = true; }, 3000);
+}
+
+function load() {
+  try { map = JSON.parse(lsGet(LS) || "{}") || {}; } catch (e) { map = {}; }
+}
+function save() {
+  if (!lsSet(LS, JSON.stringify(map))) toast("No se pudo guardar en este navegador. Revisa que no esté en modo privado.");
+  if (!persistAsked && navigator.storage && navigator.storage.persist) { persistAsked = true; navigator.storage.persist().catch(() => {}); }
+}
+
+/* ---------- Catálogo ---------- */
+function setupFamilies() {
+  const fams = [...new Set(S.map((s) => s.familia))].sort((a, b) => a.localeCompare(b));
+  $("fam").innerHTML = '<option value="">Todas las familias</option>' + fams.map((f) => '<option value="' + esc(f) + '">' + esc(f) + "</option>").join("");
+}
+
+function matches(s) {
+  const n = (map[s.id] || []).length;
+  if (filter === "vistas" && !n) return false;
+  if (filter === "porver" && n) return false;
+  if (famSel && s.familia !== famSel) return false;
+  if (query && !norm([s.comun, s.cientifico, s.actual, s.familia].join(" ")).includes(query)) return false;
+  return true;
+}
+
+function card(s) {
+  const list = map[s.id] || [];
+  const n = list.length;
+  return '<li><button class="card' + (n ? " seen" : "") + '" data-id="' + s.id + '" aria-label="' + esc(s.comun) + (n ? ", vista" : ", por ver") + '">' +
+    '<span class="ph"><img src="' + img(s.fotos[0].n) + '" alt="" width="400" height="300" loading="lazy">' +
+    (n ? '<span class="tick">' + CHECK + "</span>" : "") +
+    (s.fotos.length > 1 ? '<span class="multi">' + s.fotos.length + " fotos</span>" : "") + "</span>" +
+    '<span class="nm">' + esc(s.comun) + "</span>" +
+    '<span class="sc">' + esc(s.actual || s.cientifico) + "</span>" +
+    '<span class="st">' + (n ? "Vista · " + fmt(lastOf(list)) : "Por ver") + "</span></button></li>";
+}
+
+function seenCount() { return S.filter((s) => (map[s.id] || []).length).length; }
+
+function render() {
+  const seen = seenCount();
+  $("nTotal").textContent = S.length;
+  $("nSeen").textContent = seen;
+  $("barFill").style.width = Math.round((seen / S.length) * 100) + "%";
+  $("cTodas").textContent = "Todas " + S.length;
+  $("cVistas").textContent = "Vistas " + seen;
+  $("cPorver").textContent = "Por ver " + (S.length - seen);
+  const shown = S.filter(matches);
+  $("grid").innerHTML = shown.map(card).join("");
+  $("none").hidden = shown.length > 0;
+}
+
+/* ---------- Ventanas ---------- */
+const OVS = ["ov", "idp", "dp"];
+function anyOpen() { return OVS.some((id) => !$(id).hidden); }
+function lock() { document.body.style.overflow = anyOpen() ? "hidden" : ""; }
+function updateFab() { $("fab").hidden = heroVisible || anyOpen(); }
+function openOv(id, focusId) {
+  focusBack[id] = document.activeElement;
+  $(id).hidden = false;
+  lock();
+  updateFab();
+  if (focusId) $(focusId).focus();
+}
+function closeOv(id) {
+  $(id).hidden = true;
+  lock();
+  updateFab();
+  const f = focusBack[id];
+  if (f && f.focus && document.contains(f)) f.focus();
+}
+
+/* ---------- Ficha y registro ---------- */
+function showPhoto(i) {
+  if (!cur) return;
+  const f = cur.fotos[i];
+  const im = $("dImg");
+  im.src = img(f.n);
+  im.alt = cur.comun + (f.var ? ", " + f.var : "");
+  [...$("dThumbs").children].forEach((b, k) => b.setAttribute("aria-pressed", k === i ? "true" : "false"));
+}
+
+function openDetail(id) {
+  cur = S.find((x) => x.id === id);
+  if (!cur) return;
+  $("dFam").textContent = cur.familia;
+  $("dTitle").textContent = cur.comun;
+  $("dSci").textContent = cur.actual || cur.cientifico;
+  const a = $("dActual");
+  if (cur.actual) { a.textContent = "En el PDF aparece como " + cur.cientifico + "."; a.hidden = false; } else { a.hidden = true; }
+  const th = $("dThumbs");
+  if (cur.fotos.length > 1) {
+    th.innerHTML = cur.fotos.map((f, i) => '<button type="button" class="th" data-i="' + i + '" aria-pressed="false" aria-label="Foto ' + (i + 1) + (f.var ? ", " + esc(f.var) : "") + '"><img src="' + img(f.n) + '" alt="" width="74" height="55"><span>' + esc(f.var || "Adulto") + "</span></button>").join("");
+    th.hidden = false;
+  } else { th.innerHTML = ""; th.hidden = true; }
+  showPhoto(0);
+  $("fFecha").value = today();
+  $("fLugar").value = lsGet(LS_LUGAR) || "Humedal Conejera";
+  $("fNota").value = "";
+  refreshDetail();
+  openOv("ov", "dClose");
+}
+
+function refreshDetail() {
+  if (!cur || $("ov").hidden) return;
+  const list = (map[cur.id] || []).slice().sort((a, b) => (a.f < b.f ? 1 : a.f > b.f ? -1 : 0));
+  const st = $("dStatus");
+  if (!list.length) st.textContent = "Aún no la has marcado como vista.";
+  else st.textContent = "Vista " + (list.length === 1 ? "1 vez" : list.length + " veces") + ". Última: " + fmt(lastOf(list)) + ".";
+  $("dLogH").hidden = !list.length;
+  $("dList").innerHTML = list.map((r) =>
+    '<li class="log"><b>' + fmt(r.f) + '</b><button type="button" class="rm" data-k="' + esc(r.k) + '">Quitar</button>' +
+    (r.l ? '<span class="where">' + esc(r.l) + "</span>" : "") +
+    (r.n ? '<span class="nt">' + esc(r.n) + "</span>" : "") + "</li>").join("");
+  $("fGo").textContent = list.length ? "Registrar otro avistamiento" : "Marcar como vista";
+}
+
+$("form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (!cur) return;
+  const f = $("fFecha").value;
+  if (!f) { toast("Elige la fecha del avistamiento."); return; }
+  const lugar = $("fLugar").value.trim();
+  const nota = $("fNota").value.trim();
+  map[cur.id] = (map[cur.id] || []).concat([{ k: uid(), f: f, l: lugar, n: nota }]);
+  lsSet(LS_LUGAR, lugar);
+  save();
+  $("fNota").value = "";
+  render();
+  refreshDetail();
+  toast(cur.comun + " marcada como vista.");
+});
+
+$("dList").addEventListener("click", (e) => {
+  const b = e.target.closest(".rm");
+  if (!b || !cur) return;
+  if (b.dataset.armed !== "1") {
+    b.dataset.armed = "1";
+    b.textContent = "¿Quitar?";
+    setTimeout(() => { if (b.isConnected) { b.dataset.armed = "0"; b.textContent = "Quitar"; } }, 4000);
+    return;
+  }
+  map[cur.id] = (map[cur.id] || []).filter((r) => r.k !== b.dataset.k);
+  if (!map[cur.id].length) delete map[cur.id];
+  save();
+  render();
+  refreshDetail();
+});
+
+/* ---------- Describir el ave (búsqueda por rasgos, sin conexión) ---------- */
+const GROUPS = [
+  ["Tamaño", "t", [["p", "Pequeña, como un gorrión"], ["m", "Mediana, como una paloma"], ["g", "Grande, como un gallinazo o una garza"]]],
+  ["Ambiente", "a", [["agua", "En el agua"], ["orilla", "Orilla o barro"], ["pasto", "Pastizal"], ["arbol", "Árboles o arbustos"], ["aire", "En el aire"]]],
+  ["Color", "c", [["negro", "Negro"], ["blanco", "Blanco"], ["gris", "Gris"], ["cafe", "Café"], ["amarillo", "Amarillo"], ["rojo", "Rojo o naranja"], ["azulverde", "Azul o verde"]]]
+];
+const LABEL = {};
+GROUPS.forEach((g) => g[2].forEach((x) => { LABEL[x[0]] = x[1].split(",")[0]; }));
+const ORD = { p: 0, m: 1, g: 2 };
+const SYN = {
+  c: { negro: /negr/, blanco: /blanc/, gris: /gris|plomiz/, cafe: /cafe|marron|pardo/, amarillo: /amarill|dorad/, rojo: /\broj|naranj|rosad|escarlat|anaranj/, azulverde: /azul|verd|turquesa/ },
+  a: { agua: /\bagua|nada|nadand|lago|laguna|humedal/, orilla: /orilla|barro|lodo|fango|junco|\bcana/, pasto: /pasto|pastizal|cesped|prado|suelo|tierra/, arbol: /arbol|arbust|rama|copa|follaje|poste/, aire: /vuel|volan|\baire|cielo|planea|circul/ },
+  t: { p: /pequen|chic|diminut/, m: /median/, g: /grande|enorme/ }
+};
+const sel = { t: new Set(), a: new Set(), c: new Set() };
+let descText = "";
+
+function infer(text) {
+  const n = norm(text);
+  const out = { t: new Set(), a: new Set(), c: new Set() };
+  Object.keys(SYN).forEach((g) => Object.keys(SYN[g]).forEach((code) => { if (SYN[g][code].test(n)) out[g].add(code); }));
+  return out;
+}
+
+function matchAll() {
+  const inf = infer(descText);
+  const eff = {};
+  ["t", "a", "c"].forEach((g) => { eff[g] = new Set([...sel[g], ...inf[g]]); });
+  const isSyn = (w) => Object.keys(SYN).some((g) => Object.keys(SYN[g]).some((c) => SYN[g][c].test(w)));
+  const words = norm(descText).split(/[^a-z0-9]+/).filter((w) => w.length > 3 && !isSyn(w));
+  if (!eff.t.size && !eff.a.size && !eff.c.size && !words.length) return null;
+  return S.map((s) => {
+    let sc = 0;
+    const hits = [];
+    eff.t.forEach((c) => { const d = Math.abs(ORD[c] - ORD[s.t]); if (d === 0) { sc += 3; hits.push(LABEL[c]); } else if (d === 1) sc += 1; });
+    eff.a.forEach((c) => { if (s.a.indexOf(c) >= 0) { sc += 2; hits.push(LABEL[c]); } });
+    eff.c.forEach((c) => { const i = s.c.indexOf(c); if (i >= 0) { sc += i === 0 ? 3 : 2; hits.push(LABEL[c]); } });
+    const hay = norm([s.comun, s.cientifico, s.actual || "", s.familia].join(" "));
+    words.forEach((w) => { if (hay.indexOf(w) >= 0) { sc += 3; hits.push("«" + w + "»"); } });
+    return { s: s, sc: sc, hits: hits };
+  }).filter((r) => r.sc > 0).sort((a, b) => b.sc - a.sc).slice(0, 8);
+}
+
+function renderMatches() {
+  const r = matchAll();
+  const box = $("idRes");
+  if (r === null) { box.innerHTML = '<p class="hint">Marca o escribe algo para ver las aves que coinciden.</p>'; return; }
+  if (!r.length) { box.innerHTML = '<p class="hint">Ningún ave del catálogo coincide con esos rasgos. Quita alguno o prueba con otras palabras; puede ser un ave que no está en el PDF.</p>'; return; }
+  box.innerHTML = r.map((x) => {
+    const seen = (map[x.s.id] || []).length;
+    return '<button class="alt" type="button" data-id="' + x.s.id + '"><img src="' + img(x.s.fotos[0].n) + '" alt="" width="64" height="48"><span>' + esc(x.s.comun) + "<small>" + esc(x.s.actual || x.s.cientifico) + '</small><small class="hits">Coincide: ' + esc(x.hits.join(", ") || "tamaño cercano") + "</small></span>" + (seen ? "<em>✓ vista</em>" : "<em></em>") + "</button>";
+  }).join("");
+}
+
+function setupGroups() {
+  $("idGroups").innerHTML = GROUPS.map((g) => '<div class="grp" style="margin-bottom:12px"><b>' + g[0] + '</b><div class="chips">' + g[2].map((x) => '<button type="button" class="tag" data-g="' + g[1] + '" data-v="' + x[0] + '" aria-pressed="false">' + esc(x[1]) + "</button>").join("") + "</div></div>").join("");
+}
+
+$("idGroups").addEventListener("click", (e) => {
+  const b = e.target.closest(".tag");
+  if (!b) return;
+  const set = sel[b.dataset.g];
+  const v = b.dataset.v;
+  if (set.has(v)) set.delete(v); else set.add(v);
+  b.setAttribute("aria-pressed", set.has(v) ? "true" : "false");
+  renderMatches();
+});
+$("idTxt").addEventListener("input", (e) => { descText = e.target.value; renderMatches(); });
+$("idClear").addEventListener("click", () => {
+  ["t", "a", "c"].forEach((g) => sel[g].clear());
+  descText = "";
+  $("idTxt").value = "";
+  document.querySelectorAll(".tag").forEach((b) => b.setAttribute("aria-pressed", "false"));
+  renderMatches();
+});
+$("idRes").addEventListener("click", (e) => {
+  const b = e.target.closest(".alt");
+  if (!b) return;
+  closeOv("idp");
+  openDetail(b.dataset.id);
+});
+
+/* ---------- Mis datos: copias, CSV, instalación ---------- */
+function download(name, mime, text) {
+  const blob = new Blob([text], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+function countRecords() { return Object.keys(map).reduce((n, k) => n + map[k].length, 0); }
+
+function refreshData() {
+  const n = countRecords();
+  $("dpInfo").textContent = n ? n + (n === 1 ? " avistamiento" : " avistamientos") + " en " + seenCount() + (seenCount() === 1 ? " especie." : " especies.") : "Todavía no tienes avistamientos guardados.";
+  const bk = lsGet(LS_BK);
+  $("lastBk").textContent = bk ? "Última copia de seguridad: " + fmt(bk) + "." : n ? "Aún no has guardado ninguna copia de seguridad." : "";
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.navigator.standalone;
+  $("iosHint").hidden = !ios;
+  $("bInstall").hidden = !deferredInstall;
+}
+
+$("bBackup").addEventListener("click", () => {
+  if (!countRecords()) { toast("Todavía no tienes avistamientos para guardar."); return; }
+  download("ala-vista-copia-" + today() + ".json", "application/json", JSON.stringify({ app: "ala-vista", version: 1, exportado: new Date().toISOString(), avistamientos: map }, null, 1));
+  lsSet(LS_BK, today());
+  refreshData();
+  toast("Copia de seguridad lista.");
+});
+$("bCsv").addEventListener("click", () => {
+  const q = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+  const rows = [["Nombre común", "Nombre científico", "Familia", "Fecha", "Lugar", "Notas"].map(q).join(",")];
+  S.forEach((s) => (map[s.id] || []).slice().sort((a, b) => (a.f < b.f ? -1 : 1)).forEach((r) => {
+    rows.push([s.comun, s.actual || s.cientifico, s.familia, r.f, r.l, r.n].map(q).join(","));
+  }));
+  if (rows.length === 1) { toast("Todavía no tienes avistamientos para exportar."); return; }
+  download("ala-vista-avistamientos.csv", "text/csv;charset=utf-8", "﻿" + rows.join("\r\n"));
+});
+$("bRestore").addEventListener("change", (e) => {
+  const f = e.target.files && e.target.files[0];
+  e.target.value = "";
+  if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const data = JSON.parse(String(rd.result));
+      const src = data && data.avistamientos;
+      if (!src || typeof src !== "object") throw new Error("formato");
+      let added = 0;
+      Object.keys(src).forEach((id) => {
+        if (!S.some((s) => s.id === id) || !Array.isArray(src[id])) return;
+        const have = new Set((map[id] || []).map((r) => r.k));
+        src[id].forEach((r) => {
+          if (r && typeof r.f === "string" && r.k && !have.has(r.k)) {
+            map[id] = (map[id] || []).concat([{ k: String(r.k), f: r.f, l: String(r.l || ""), n: String(r.n || "") }]);
+            added++;
+          }
+        });
+      });
+      save();
+      render();
+      refreshData();
+      toast(added ? "Copia restaurada: " + added + (added === 1 ? " avistamiento agregado." : " avistamientos agregados.") : "La copia no tenía avistamientos nuevos.");
+    } catch (err) { toast("No pude leer ese archivo. Elige una copia de seguridad de esta app."); }
+  };
+  rd.readAsText(f);
+});
+$("bInstall").addEventListener("click", async () => {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  try { await deferredInstall.userChoice; } catch (e) {}
+  deferredInstall = null;
+  refreshData();
+});
+window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredInstall = e; refreshData(); });
+window.addEventListener("appinstalled", () => { deferredInstall = null; toast("App instalada."); refreshData(); });
+window.addEventListener("offline", () => toast("Sin conexión: la app sigue funcionando."));
+
+/* ---------- Eventos ---------- */
+$("grid").addEventListener("click", (e) => { const b = e.target.closest(".card"); if (b) openDetail(b.dataset.id); });
+$("dThumbs").addEventListener("click", (e) => { const b = e.target.closest(".th"); if (b) showPhoto(Number(b.dataset.i)); });
+$("dClose").addEventListener("click", () => { cur = null; closeOv("ov"); });
+$("idClose").addEventListener("click", () => closeOv("idp"));
+$("dpClose").addEventListener("click", () => closeOv("dp"));
+OVS.forEach((id) => $(id).addEventListener("click", (e) => { if (e.target === $(id)) { if (id === "ov") cur = null; closeOv(id); } }));
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  const open = OVS.filter((id) => !$(id).hidden).pop();
+  if (open) { if (open === "ov") cur = null; closeOv(open); }
+});
+$("q").addEventListener("input", (e) => { query = norm(e.target.value.trim()); render(); });
+$("fam").addEventListener("change", (e) => { famSel = e.target.value; render(); });
+document.querySelectorAll(".chip").forEach((c) => c.addEventListener("click", () => {
+  filter = c.dataset.f;
+  document.querySelectorAll(".chip").forEach((x) => x.setAttribute("aria-pressed", x === c ? "true" : "false"));
+  render();
+}));
+$("btnTxt").addEventListener("click", () => { renderMatches(); openOv("idp", "idClose"); });
+$("fab").addEventListener("click", () => { renderMatches(); openOv("idp", "idClose"); });
+$("btnData").addEventListener("click", () => { refreshData(); openOv("dp", "dpClose"); });
+$("fab").innerHTML = CAM + "Identificar";
+$("btnTxt").insertAdjacentHTML("afterbegin", CAM);
+if ("IntersectionObserver" in window) {
+  new IntersectionObserver((es) => { heroVisible = es[0].isIntersecting; updateFab(); }).observe($("idHero"));
+}
+
+/* ---------- Arranque ---------- */
+load();
+setupFamilies();
+setupGroups();
+render();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    const had = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (had) toast("Se actualizó la app. Ciérrala y ábrela de nuevo para ver los cambios."); });
+  });
+}
+</script>
+</body>
+</html>
